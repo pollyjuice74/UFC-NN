@@ -3,27 +3,8 @@
 Onworking project to get UFC figher and fights data, use Elo Ranking Algorithm on them and then add Neural Network Weights to process the data and make better win/loss predictions.
 
 
----
-`.
-├── UFCspdr
-│   ├── __init__.py
-│   ├── __pycache__
-│   │   ├── __init__.cpython-310.pyc
-│   │   └── settings.cpython-310.pyc
-│   ├── items.py
-│   ├── middlewares.py
-│   ├── pipelines.py
-│   ├── settings.py
-│   └── spiders
-│       ├── __init__.py
-│       ├── __pycache__
-│       │   ├── __init__.cpython-310.pyc
-│       │   └── spdr.cpython-310.pyc
-│       └── spdr.py
-├── rank.py
-└── scrapy.cfg
-
-4 directories, 13 files`
+![Alt text](image-1.png)
+![Alt text](image.png)
 
 ---
 
