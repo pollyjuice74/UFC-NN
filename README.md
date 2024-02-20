@@ -12,3 +12,6 @@ Onworking project to get UFC figher and fights data, use Elo Ranking Algorithm o
 
 - UFC Stats
   http://ufcstats.com/fighter-details/93fe7332d16c6ad9
+
+- UFC Fight Nights
+  https://www.ufcespanol.com/event/ufc-fight-night-february-24-2024
