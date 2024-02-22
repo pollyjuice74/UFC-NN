@@ -14,13 +14,11 @@ class ufcSpdr(s.Spider):
 
     start_url = [base_url+"/events"]
     fighters = set() #[base_url+"/athlete/raoni-haruserosu"]
-    event = set() #[base_url+"/event/ufc-299"]
-
+    events = set() #[base_url+"/event/ufc-299"]
 
     def parse(self, response):
-        pass
+        self.parseFighter(response)
         
-
     def parseFighter(self, response):
         # Starts crawl
         fighter_url = response.url
