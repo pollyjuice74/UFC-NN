@@ -5,6 +5,17 @@ Onworking project to get UFC figher and fights data, use Elo Ranking Algorithm o
 
 Tree
 
+## Layout
+
+In `UFCSpdr/spiders/spdr.py` there is a definition for a web crawling spider `ufcSpdr(scrapy.Spider)` that will get information on `Fighters` and `Fights`.
+
+On `rank.py` there is an implementation for three classes:
+  `FighterGraph` 
+    - Graph to calculate Elo Rating for UFC fighters. 
+  - 
+  `Fighter`
+  `Fight`
+
 ---
 
 ## Resources
