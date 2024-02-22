@@ -14,8 +14,8 @@ On `rank.py` there is an implementation for three classes:
 `FighterGraph` 
   - Graph to calculate Elo Rating for UFC fighters. 
 - Formaly defined as G = (E, V), where
-        -- E = {(fighter_1, fighter_2) | for fighter_i in fight for fight in all_fights},
-        -- V = {fighter | for fighter in fighters_set}
+- E = {(fighter_1, fighter_2) | for fighter_i in fight for fight in all_fights},
+- V = {fighter | for fighter in fighters_set}
   
   `Fighter`
   `Fight`
