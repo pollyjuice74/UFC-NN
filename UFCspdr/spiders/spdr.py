@@ -5,6 +5,7 @@
 import scrapy as s
 import re
 from collections import defaultdict
+from UFC.rank import Fight, Fighter
 
 class ufcSpdr(s.Spider):
     name = "ufc"
@@ -37,6 +38,8 @@ class ufcSpdr(s.Spider):
 
         # Opponents
         opponents = set(response.xpath("//h3/a/@href").getall()) - {fighter_url}
+        [Fight(response) for fight in fights]
+        
         
 
 
@@ -99,7 +102,7 @@ class ufcSpdr(s.Spider):
 
         # Fighters (F_1, F_2)
         fighter_pattern = r"([A-Za-z' ]+) vs ([A-Za-z' ]+)"
-        fighters = re.findall(fighter_pattern, text)
+        fighters = re.findall(fighter_pattern, text) ###
 
         # Links of fighters
         link_pattern = r"/athlete/([a-z\-]+)"
