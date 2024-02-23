@@ -1,26 +1,33 @@
 # TODO get wins, losses and draws of individual fighters
+import os
+
+current_directory = os.path.dirname(__file__) 
+fighters_json_path = os.path.join(current_directory, 'UFCspdr', 'Fighters.json')
+fights_json_path = os.path.join(current_directory, 'UFCspdr', 'Fights.json')
 
 class Fighter:
     def __init__(self, data, base_rating=1500):
 
         # Data
         ###############################################
-        self.data = data ### dict()
+        self.data = None #
+
+        # self.wins = data.get('wins', 0)  # Total number of wins
+        # self.losses = data.get('losses', 0)  # Total number of losses
+        # self.draws = data.get('draws', 0)  # Total number of draws
+
+        # self.strikes = data.get('strikes', 0)  # Total number of strikes attempted
+        # self.strikes_landed = data.get('strikes_landed', 0)  # Total number of strikes that landed
+
+        # self.takedowns = data.get('takedowns', 0)  # Total number of takedown attempts
+        # self.takedowns_landed = data.get('takedowns_landed', 0)  # Total number of successful takedowns
+
+        # # Win methods ("Submission", "KO", "Decision")
+        # self.win_method = data.get('win_method', {})  # Example: {"Submission": {"Rear Naked Choke": 2, "Guillotine": 1}, "KO": 5}
+        ###############################################
 
         self.name = data.get('name', '')  # Fighter's name
-        self.wins = data.get('wins', 0)  # Total number of wins
-        self.losses = data.get('losses', 0)  # Total number of losses
-        self.draws = data.get('draws', 0)  # Total number of draws
-
-        self.strikes = data.get('strikes', 0)  # Total number of strikes attempted
-        self.strikes_landed = data.get('strikes_landed', 0)  # Total number of strikes that landed
-
-        self.takedowns = data.get('takedowns', 0)  # Total number of takedown attempts
-        self.takedowns_landed = data.get('takedowns_landed', 0)  # Total number of successful takedowns
-
-        # Win methods ("Submission", "KO", "Decision")
-        self.win_method = data.get('win_method', {})  # Example: {"Submission": {"Rear Naked Choke": 2, "Guillotine": 1}, "KO": 5}
-        ###############################################
+        self.url = data.get('url', '') # Fighter's url
 
         self.wins = 0
         self.losses = 0
@@ -33,15 +40,23 @@ class Fighter:
         self.record =  [self.wins,
                         self.losses,
                         self.draws]
+    
+    def build(self, url):
+        # Reads data from parsedFighter
+        with open(fighters_json_path, 'r') as f:
+            self.data = json.load(f)
+
+
+
 
 
 class Fight:
-    def __init__(self, data, completed=False):
-        self.f0 = Fighter(data.fighters[0])
-        self.f1 = Fighter(data.fighters[1])
+    def __init__(self, fighter1, fighter2):
+        self.f1 = fighter1
+        self.f2 = fighter2
 
-        self.winner = self.get_winner() if completed else None
-        self.loser = self.get_loser() if completed else None
+        self.winner = self.get_winner() 
+        self.loser = self.get_loser() 
 
         self.method = None
         self.date = None
@@ -69,6 +84,7 @@ class FighterGraph:
         
         self.calculate_ranks(fights)
 
+
     def calculate_ranks(self, fights):
         """
         Calculates ranks for all fights that are available
@@ -92,8 +108,12 @@ class FighterGraph:
         #     else: # Draw
         #         winner = None
         #         loser = None
+                
+                
+    def build(self):
+        # Build the FighterGraph, read scraped data, create Fighter and Fight objects/nodes
+        pass
 
-            
     
     def update_ranks(self, new_fights):
         # Updates already calculated ranks with new fighters adding to the data

@@ -12,6 +12,13 @@ BOT_NAME = "UFCspdr"
 SPIDER_MODULES = ["UFCspdr.spiders"]
 NEWSPIDER_MODULE = "UFCspdr.spiders"
 
+# # settings.py
+# ITEM_PIPELINES = {
+#     'UFCspdr.pipelines.FightPipeline': 300,
+#     'UFCspdr.pipelines.FighterPipeline': 301,
+# }
+
+
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = "UFCspdr (+http://www.yourdomain.com)"
