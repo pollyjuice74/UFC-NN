@@ -1,16 +1,18 @@
 # TODO get wins, losses and draws of individual fighters
 import os
+import json
+
 
 current_directory = os.path.dirname(__file__) 
 fighters_json_path = os.path.join(current_directory, 'UFCspdr', 'Fighters.json')
 fights_json_path = os.path.join(current_directory, 'UFCspdr', 'Fights.json')
+
 
 class Fighter:
     def __init__(self, data, base_rating=1500):
 
         # Data
         ###############################################
-        self.data = None #
 
         # self.wins = data.get('wins', 0)  # Total number of wins
         # self.losses = data.get('losses', 0)  # Total number of losses
@@ -26,12 +28,12 @@ class Fighter:
         # self.win_method = data.get('win_method', {})  # Example: {"Submission": {"Rear Naked Choke": 2, "Guillotine": 1}, "KO": 5}
         ###############################################
 
-        self.name = data.get('name', '')  # Fighter's name
-        self.url = data.get('url', '') # Fighter's url
+        self.name = data.get('name')  # Fighter's name
+        self.url = data.get('url') # Fighter's url
 
-        self.wins = 0
-        self.losses = 0
-        self.draws = 0
+        self.wins = data.get('wins')
+        self.losses = data.get('losses')
+        self.draws = data.get('draws')
 
         self.rating = base_rating
 
@@ -40,23 +42,15 @@ class Fighter:
         self.record =  [self.wins,
                         self.losses,
                         self.draws]
-    
-    def build(self, url):
-        # Reads data from parsedFighter
-        with open(fighters_json_path, 'r') as f:
-            self.data = json.load(f)
-
-
-
 
 
 class Fight:
-    def __init__(self, fighter1, fighter2):
-        self.f1 = fighter1
-        self.f2 = fighter2
+    def __init__(self, data):
+        self.blue_corner = data.get('blue_corner')# Fighter object
+        self.red_corner = data.get('red_corner')
 
-        self.winner = self.get_winner() 
-        self.loser = self.get_loser() 
+        self.winner = data.get('winner')
+        self.loser = self.blue_corner if self.winner==self.blue_corner else self.red_corner if self.winner==self.red_corner else None #data.get('loser','')
 
         self.method = None
         self.date = None
@@ -70,55 +64,57 @@ class FighterGraph:
         Edges = {(u,v, winner_id) | u,v elems of Vertices}
         Each edge should contain the W,L,D outcome of the fight
     """
-    def __init__(self, fights):
-        self.fights = fights
-        self.fighters = {fighter for fight in self.fights for fighter in fight} #set()
-        self.ranks = dict() # fighter.name: rank
+    def __init__(self):
+        self.fighters = dict() #{fighter for fight in self.fights for fighter in fight} #set()
+        self.fights = list() 
+        # self.v = {fighter.name for fighter in self.fighters} # Vertices (fighters)
+        # self.e = set() # Edges (fights)
 
-        self.v = {fighter.name for fighter in self.fighters} # Vertices
-        self.e = set() # Edges
-        for fighter in self.fighters:
-            for fight in fighter.fights:
-                win_status = fight.winner if fight.winner else None
-                self.e.add((fighter.name, fight.opp.name, win_status))
-        
-        self.calculate_ranks(fights)
+        self.build()
+        self.calculate_ranks()
+        self.show_ranks()
 
 
-    def calculate_ranks(self, fights):
+    def build(self):
+        """
+        Loads the data that has been scraped and will fill the FighterGraph
+        """
+        file_path = 'Fights.json'
+
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+
+            for item in data:
+                # Check if item is a Fighter
+                if "name" in item:
+                    print(item)
+                    url = item.get('url')
+                    if url and url not in self.fighters:
+                        self.fighters[url] = Fighter(item)
+
+                # Check if item is a Fight
+                elif "blue_corner" in item and "red_corner" in item and "winner" in item:
+                    self.fights.append(Fight(item))
+
+        print(" Loaded Fights and Fighters data... ")
+
+
+    def calculate_ranks(self):
         """
         Calculates ranks for all fights that are available
         """
-        for fight in fights:
-            if not fight.draw:
-                self.update_rating(fight.winner, fight.loser)
 
-        # # Populate ranks dictionary
-        # for fighter in self.fighters:
-        #     self.ranks[fighter.name] = fighter.rank
+        for fight in self.fights:
+            winner = self.fighters.get(fight.winner)
+            loser = self.fighters.get(fight.loser)
 
-        # #
-        # for u, v, winner_name in self.e:
-        #     if winner_name:
-        #         winner = u if u.name == winner_name else v if v.name == winner_name else None
-        #         loser = v if u == winner else u
+            self.update_ratings(winner, loser
+                ) if winner and loser else print(f"Skipping fight due to incomplete data: {fight}")  # Check if winner and loser are not None
 
-        #         self.update_elo_ratings(winner, loser)
+        print(f" Calculated ranks {len(self.fights)}")   
 
-        #     else: # Draw
-        #         winner = None
-        #         loser = None
-                
-                
-    def build(self):
-        # Build the FighterGraph, read scraped data, create Fighter and Fight objects/nodes
-        pass
 
-    
-    def update_ranks(self, new_fights):
-        # Updates already calculated ranks with new fighters adding to the data
-        pass
-        
+    @staticmethod
     def update_ratings(winner, loser, K=32):  
         """
         Input
@@ -140,8 +136,22 @@ class FighterGraph:
         winner.rating = winner.rating + K*(score_winner - exp_winner)
         loser.rating = loser.rating + K*(score_loser - exp_loser)
 
+    
+    def show_ranks(self):
+        # Sort fighter ranks from highest to lowest and print fighter.name: fighter.rank format
+        sorted_fighters = sorted(self.fighters.values(), key=lambda fighter: fighter.rating, reverse=True)
+
+        for fighter in sorted_fighters:
+            print(f"{fighter.name}: {fighter.rating}")
 
 
-def elo_rank(fighter, damp=400):
-    w, l, d = fighter.record
-    games = w+l+d
+    def update_ranks(self, new_fights):
+        # Updates already calculated ranks with new fighters adding to the data
+        pass
+        
+
+def main():
+    graph = FighterGraph()
+
+
+main()
