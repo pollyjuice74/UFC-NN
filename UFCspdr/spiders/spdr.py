@@ -27,7 +27,6 @@ class ufcSpdr(s.Spider):
         super(ufcSpdr, self).__init__(*args, **kwargs)
         self.events = [self.base_url + "/event/ufc-" + str(i) for i in range(1, 300)]
 
-
     def parse(self, response):
         """
         Checks and stores all events' histories

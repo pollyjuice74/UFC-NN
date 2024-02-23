@@ -45,15 +45,20 @@ class Fighter:
 
 
 class Fight:
-    def __init__(self, data):
-        self.blue_corner = data.get('blue_corner')# Fighter object
-        self.red_corner = data.get('red_corner')
+    def __init__(self, data, fighters):
+        self.blue_corner_url = data.get('blue_corner')
+        self.red_corner_url = data.get('red_corner')
+        self.winner_url = data.get('winner')
 
-        self.winner = data.get('winner')
+        # Convert URLs to Fighter objects
+        self.blue_corner = fighters.get(self.blue_corner_url)
+        self.red_corner = fighters.get(self.red_corner_url)
+
+        self.winner = fighters.get(self.winner_url) ###
         self.loser = self.blue_corner if self.winner==self.blue_corner else self.red_corner if self.winner==self.red_corner else None #data.get('loser','')
 
         self.method = None
-        self.date = None
+        self.date = None ###
 
 
 class FighterGraph:
@@ -76,42 +81,67 @@ class FighterGraph:
 
 
     def build(self):
-        """
-        Loads the data that has been scraped and will fill the FighterGraph
-        """
-        file_path = 'Fights.json'
+        file_path = 'Fights.json'  # Adjusted path for combined data
 
         with open(file_path, 'r') as file:
             data = json.load(file)
+            fight_data = []  # Temporarily store fight data until all fighters are processed
 
             for item in data:
-                # Check if item is a Fighter
-                if "name" in item:
-                    print(item)
+                if "name" in item:  # Assuming this indicates a fighter entry
                     url = item.get('url')
                     if url and url not in self.fighters:
                         self.fighters[url] = Fighter(item)
+                elif "blue_corner" in item and "red_corner" in item and "winner" in item:  # Indicates a fight entry
+                    fight_data.append(item)
 
-                # Check if item is a Fight
-                elif "blue_corner" in item and "red_corner" in item and "winner" in item:
-                    self.fights.append(Fight(item))
+            # Process fights after all fighters have been instantiated
+            for item in fight_data:
+                fight = self.create_fight(item)
+                if fight:  # Ensure fight is valid before adding
+                    self.fights.append(fight)
 
-        print(" Loaded Fights and Fighters data... ")
+
+    def create_fight(self, data):
+        # Create and return a Fight object if both fighters are known
+        blue_corner = self.fighters.get(data.get('blue_corner'))
+        red_corner = self.fighters.get(data.get('red_corner'))
+        winner_url = data.get('winner')
+
+        if blue_corner and red_corner:
+            fight = Fight(data, self.fighters)  # Assuming Fight's __init__ can handle raw data appropriately
+            fight.blue_corner = blue_corner
+            fight.red_corner = red_corner
+            fight.winner = self.fighters.get(winner_url)
+
+            # Correctly determine the loser
+            if fight.winner and fight.winner == blue_corner:
+                fight.loser = red_corner
+            elif fight.winner and fight.winner == red_corner:
+                fight.loser = blue_corner
+            else:
+                # Handle draw or no contest if applicable
+                fight.loser = None
+
+            return fight
+        return None
 
 
     def calculate_ranks(self):
         """
         Calculates ranks for all fights that are available
         """
-
+        print(f"Starting rank calculations for {len(self.fights)} fights.")
         for fight in self.fights:
-            winner = self.fighters.get(fight.winner)
-            loser = self.fighters.get(fight.loser)
+            # Ensure that both winner and loser are valid Fighter objects
+            if fight.winner and fight.loser:
+                print(f"Before update - Winner ({fight.winner.name}): {fight.winner.rating}, Loser ({fight.loser.name}): {fight.loser.rating}")
+                self.update_ratings(fight.winner, fight.loser)
+                print(f"After update - Winner ({fight.winner.name}): {fight.winner.rating}, Loser ({fight.loser.name}): {fight.loser.rating}")
+            else:
+                print(f"Skipping fight due to incomplete data or draw. Winner: {fight.winner}, Loser: {fight.loser}")
 
-            self.update_ratings(winner, loser
-                ) if winner and loser else print(f"Skipping fight due to incomplete data: {fight}")  # Check if winner and loser are not None
-
-        print(f" Calculated ranks {len(self.fights)}")   
+        print(f"Rank calculations completed.")
 
 
     @staticmethod
@@ -120,26 +150,26 @@ class FighterGraph:
         Input
             winner: Fighter object
             loser: Fighter object
-            draw: flag
             K: damping factor
         Output
             None
         """  
         # Calculate expected scores
-        exp_winner = 1 / (1 + 10**((loser.rating - winner.rating) / 400)) # Predict outcome of game #rating = op_rating * damp*(w-l) / games
-        exp_loser = 1 / (1 + 10**((winner.rating - loser.rating) / 400))
+        exp_winner = 1 / (1 + 10**((int(loser.rating) - int(winner.rating)) / 400)) # Predict outcome of game #rating = op_rating * damp*(w-l) / games
+        exp_loser = 1 / (1 + 10**((int(winner.rating) - int(loser.rating)) / 400))
         
         # Actual scores
         score_winner, score_loser = 1,0 
         
         # Update ratings
-        winner.rating = winner.rating + K*(score_winner - exp_winner)
-        loser.rating = loser.rating + K*(score_loser - exp_loser)
+        winner.rating = int(int(winner.rating) + K*(score_winner - float(exp_winner)))
+        loser.rating = int(int(loser.rating) + K*(score_loser - float(exp_loser)))
 
     
     def show_ranks(self):
+        #print([fighter.rating for fighter in self.fighters])
         # Sort fighter ranks from highest to lowest and print fighter.name: fighter.rank format
-        sorted_fighters = sorted(self.fighters.values(), key=lambda fighter: fighter.rating, reverse=True)
+        sorted_fighters = sorted(self.fighters.values(), key=lambda fighter: fighter.rating, reverse=False)
 
         for fighter in sorted_fighters:
             print(f"{fighter.name}: {fighter.rating}")
