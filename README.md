@@ -4,14 +4,14 @@ Onworking project to get UFC figher and fights data, use Elo Ranking Algorithm o
 
 <img src="https://github.com/pollyjuice74/UFC-NN/assets/104398042/8fb68ccd-dc7f-43b2-bb89-33c88a0987f8" width="500" alt="image">
 
-### Top 5 Rank Predictions
+### Top 5 Elo Rank Predictions
 - Jon Jones: 1650
 - Chuck Liddell: 1646
 - Matt Hughes: 1644
 - Royce Gracie: 1627
 - Robbie Lawler: 1626
 
-### Worse 5 Rank Predictions
+### Worse 5 Elo Rank Predictions
 - Chael Sonnen: 1411
 - Sam Stout: 1414
 - Ricardo Almeida: 1416
