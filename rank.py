@@ -1,6 +1,7 @@
 # TODO get wins, losses and draws of individual fighters
 import os
 import json
+import uuid
 
 
 current_directory = os.path.dirname(__file__) 
@@ -37,7 +38,7 @@ class Fighter:
 
         self.rating = base_rating
 
-        self.ops = set()
+        self.fight_ids = set() # Set of fights fought
         self.hist = list() # Timeline of fighter history
         self.record =  [self.wins,
                         self.losses,
@@ -46,6 +47,7 @@ class Fighter:
 
 class Fight:
     def __init__(self, data, fighters):
+        self.id = uuid.uuid4()
         self.blue_corner_url = data.get('blue_corner')
         self.red_corner_url = data.get('red_corner')
         self.winner_url = data.get('winner')
@@ -61,6 +63,8 @@ class Fight:
         self.date = None ###
 
 
+
+
 class FighterGraph:
     """
     Create graph of fighters
@@ -71,17 +75,18 @@ class FighterGraph:
     """
     def __init__(self):
         self.fighters = dict() #{fighter for fight in self.fights for fighter in fight} #set()
-        self.fights = list() 
+        self.fights = dict() # dict
         # self.v = {fighter.name for fighter in self.fighters} # Vertices (fighters)
         # self.e = set() # Edges (fights)
 
         self.build()
         self.calculate_ranks()
         self.show_ranks()
+        self.save_ranks()
 
 
     def build(self):
-        file_path = 'Fights.json'  # Adjusted path for combined data
+        file_path = 'Fighters.json'  # Adjusted path for combined data
 
         with open(file_path, 'r') as file:
             data = json.load(file)
@@ -98,8 +103,22 @@ class FighterGraph:
             # Process fights after all fighters have been instantiated
             for item in fight_data:
                 fight = self.create_fight(item)
-                if fight:  # Ensure fight is valid before adding
-                    self.fights.append(fight)
+                if fight: 
+                    f_id = fight.id
+                    blue_url, red_url = fight.blue_corner_url, fight.red_corner_url
+
+                    # Get objects
+                    blue_fighter = self.fighters[blue_url]
+                    red_fighter = self.fighters[red_url]
+
+                    # Add fight id to eachothers opponents sets
+                    blue_fighter.fight_ids.add(f_id)
+                    red_fighter.fight_ids.add(f_id)
+                    # Add fight to fights dict
+                    self.fights[f_id] = fight
+
+        # Sort fights by date
+        #self.fights = sorted(self.fights, key=lambda fight: fight.date)
 
 
     def create_fight(self, data):
@@ -132,12 +151,10 @@ class FighterGraph:
         Calculates ranks for all fights that are available
         """
         print(f"Starting rank calculations for {len(self.fights)} fights.")
-        for fight in self.fights:
+        for fight in self.fights.values():
             # Ensure that both winner and loser are valid Fighter objects
             if fight.winner and fight.loser:
-                print(f"Before update - Winner ({fight.winner.name}): {fight.winner.rating}, Loser ({fight.loser.name}): {fight.loser.rating}")
                 self.update_ratings(fight.winner, fight.loser)
-                print(f"After update - Winner ({fight.winner.name}): {fight.winner.rating}, Loser ({fight.loser.name}): {fight.loser.rating}")
             else:
                 print(f"Skipping fight due to incomplete data or draw. Winner: {fight.winner}, Loser: {fight.loser}")
 
@@ -174,14 +191,93 @@ class FighterGraph:
         for fighter in sorted_fighters:
             print(f"{fighter.name}: {fighter.rating}")
 
+    
+    def save_ranks(self):
+        # Saves fighter ranks to a file
+        pass
+
 
     def update_ranks(self, new_fights):
         # Updates already calculated ranks with new fighters adding to the data
         pass
+
+
+    def print(self):
+        # for fight in self.fights:
+        #     print(fight.blue_corner.name + " vs " + fight.red_corner.name)
+        print("Fighters count: ", len(self.fighters))
+        print("Fights count: ", len(self.fights))
         
 
-def main():
-    graph = FighterGraph()
 
+class SampleGraph:
+    """
+    This is a sample of the FighterGraph that will be used to train the model. 
+    """
+    def __init__(self, fight, fgraph):
+        self.fighters = dict()
+        self.fights = set()
+
+        self.build(fight, fgraph)
+        #self.prune_graph()
+        self.print()
+        
+
+    def build(self, fight, fgraph):
+        # Get fighter neighbors to a depth of 1
+        blue_url, red_url = fight.blue_corner_url, fight.red_corner_url        
+        
+        red_fighter = fgraph.fighters[red_url]
+        blue_fighter = fgraph.fighters[blue_url]
+        fighters_set = set() # Temporar set
+
+        for fighter in [red_fighter, blue_fighter]:
+            for f_id in fighter.fight_ids:
+                opp_url = self.get_opponent(fighter.url, f_id, fgraph)
+                if opp_url:
+                    opp = fgraph.fighters[opp_url]
+
+                    # Add data to graph
+                    for id in opp.fight_ids:
+                        self.fights.add(fgraph.fights[id])
+                    fighters_set.add(opp_url)
+        
+        # Make self.fighters dict
+        for url in fighters_set: 
+            self.fighters[url] = fgraph.fighters[url] 
+
+        
+    def get_opponent(self, f_url, fight_id, fgraph):
+        # Gets opponent url 
+        fight = fgraph.fights[fight_id]
+        opp_url = fight.red_corner_url if fight.blue_corner_url==f_url else fight.blue_corner_url if fight.red_corner_url==f_url else None
+        return opp_url
+
+
+    def prune_graph(graph, date):
+        # Removes all nodes from the graph where the fight's date is after 'date' 
+        sample_graph = graph.deepcopy()
+
+        for fight in graph.fights: # Make it so it starts at the latest fight for efficiency
+            if fight.date > date:
+                sample_graph.remove(fight)
+            else:
+                break
+
+    def print(self):
+        # for fight in self.fights:
+        #     print(fight.blue_corner.name + " vs " + fight.red_corner.name)
+        print("Fighters count: ", len(self.fighters))
+        print("Fights count: ", len(self.fights))
+
+
+def main():
+    fgraph = FighterGraph()
+    k = list(fgraph.fights.keys())[0]
+    fight = fgraph.fights[k]
+    print(fight.blue_corner_url, fight.red_corner_url)
+
+    sgraph = SampleGraph(fight, fgraph)
+    fgraph.print()
 
 main()

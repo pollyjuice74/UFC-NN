@@ -1,6 +1,7 @@
 # https://www.ufcespanol.com/athlete/raoni-haruserosu
 # scrapy shell 'https://www.ufcespanol.com/athlete/raoni-barcelos'
 # For using xpath https://doc.scrapy.org/en/latest/topics/selectors.html
+# scrapy crawl ufc -o Fights.json
 
 import scrapy as s
 import re
@@ -18,6 +19,16 @@ class ufcSpdr(s.Spider):
     name = "ufc"
     base_url = "https://www.ufcespanol.com"
     allowed_domains = ["www.ufcespanol.com"]
+    headers = {
+            'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36',
+            'DOWNLOAD_DELAY': 1,  # Delay between requests to mimic human behavior and avoid getting blocked
+            # Consider using a proxy or a proxy pool to bypass IP-based blocking
+            # 'PROXY_POOL_ENABLED': True,
+            # 'DOWNLOADER_MIDDLEWARES': {
+            #     'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': None,
+            #     'scrapy_proxy_pool.middlewares.ProxyPoolMiddleware': 610,
+            #     'scrapy_proxy_pool.middlewares.BanDetectionMiddleware': 620,
+        }
 
     start_urls = [base_url+"/events"]
     # fights = list() # List of fight objects
@@ -31,7 +42,8 @@ class ufcSpdr(s.Spider):
         """
         Checks and stores all events' histories
         """
-        for event in self.events:
+        for i, event in enumerate(self.events):
+            print(f" *******************************EVENT NUMBER {i+1}**************************** ")
             yield s.Request(event, callback=self.parseEvent)
             
 
@@ -58,9 +70,12 @@ class ufcSpdr(s.Spider):
         # Parse fighters 
         for blue_url, red_url, outcome in winners:
             # Collect data
-            yield FightItem(blue_corner=blue_url, 
-                            red_corner=red_url, 
-                            winner=outcome)
+            yield { "blue_corner": blue_url,
+                    "red_corner": red_url, 
+                    "winner": outcome }
+            # yield FightItem(blue_corner=blue_url, 
+            #                 red_corner=red_url, 
+            #                 winner=outcome)
 
             # Further parse fighters
             if blue_url:
@@ -152,11 +167,16 @@ class ufcSpdr(s.Spider):
         # Opponents
         #opponents = set(response.xpath("//h3/a/@href").getall()) - {response.url}
 
-        yield FighterItem(name=name,
-                          url=response.url, 
-                          wins=wins, 
-                          losses=losses, 
-                          draws=draws)
+        yield { "name": name,
+                "url": response.url, 
+                "wins": wins, 
+                "losses": losses, 
+                "draws": draws}
+        # yield FighterItem(name=name,
+        #                   url=response.url, 
+        #                   wins=wins, 
+        #                   losses=losses, 
+        #                   draws=draws)
 
             #"opponents": opponents, # {name: list of w/l/d}
             
