@@ -1,6 +1,6 @@
 # UFC predictor
 
-Onworking project to get UFC figher and fights data, use Elo Ranking Algorithm on them and then add Neural Network Weights to process the data and make better win/loss predictions.
+Project to get UFC figher and fights data, use Elo Ranking Algorithm on them.
 
 <img src="https://github.com/pollyjuice74/UFC-NN/assets/104398042/8fb68ccd-dc7f-43b2-bb89-33c88a0987f8" width="500" alt="image">
 
